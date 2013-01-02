@@ -84,7 +84,7 @@ class MetarVisibility extends \stdClass {
     if (preg_match('!^(CAVOK|[MP]?\d+(?:/\d+)?)(SM)?$!', $token, $results)) {
       $this->raw = $token;
       $this->visibility = $results[1];
-      $this->unit = $results[2];
+      $this->unit = @$results[2];
     }
   }
 
@@ -279,12 +279,14 @@ class Metar extends \stdClass {
   public $raw;
   public $airport;
   public $time;
-  public $auto_observation;
+  public $auto = false;
   public $wind;
   public $visibility;
   public $weather_types = array();
   public $cloud_layers = array();
   public $temperature;
+  public $nosig = false;
+  public $remarks;
 
   function __construct ($report = null) {
     if ($report) {
@@ -303,7 +305,7 @@ class Metar extends \stdClass {
 
     if ($tokens[0] == 'AUTO') {
       array_shift($tokens);
-      $this->auto_observation = true;
+      $this->auto = true;
     }
 
     $token = array_shift($tokens);
@@ -340,11 +342,17 @@ class Metar extends \stdClass {
     $token = array_shift($tokens);
     $this->altimeter = MetarAltimeter::create($token, true);
 
-    list($rmk, $tokens) = $this->get_token($tokens, '/^RMK$/', false);
-    if ($rmk) {
+    if (@$tokens[0] == 'NOSIG') {
+      array_shift($tokens);
+      $this->nosig = true;
+    }
+
+    if (@$tokens[0] == 'RMK') {
+      array_shift($tokens);
       $this->remarks = implode(' ', $tokens);
       $tokens = array();
     }
+
   }
 
   private static function get_token ($tokens, $pattern, $required = true) {
