@@ -169,6 +169,21 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
+  function testRVR () {
+    $metar = new \metar_taf\Metar('PAKU 021245Z 06016KT 3SM R06/P6000FT BR BKN017 M20/M22 A2955');
+    $template = array(
+      'rvr' => array(
+        array(
+          'runway' => 'R06',
+          'assessment' => 'P',
+          'rvr' => 6000,
+          'unit' => 'FT',
+        ),
+      ),
+    );
+    $this->compare_object($template, $metar);
+  }
+
   function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);

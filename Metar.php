@@ -104,6 +104,45 @@ class MetarVisibility extends \stdClass {
 }
 
 /**
+ * RVR from a METAR report.
+ */
+class MetarRVR extends \stdclass {
+  public $raw;
+  public $runway;
+  public $assessment;
+  public $rvr;
+  public $unit;
+
+  function __construct ($token = null) {
+    if ($token) {
+      $this->parse($token);
+    }
+  }
+
+  function parse ($token) {
+    $results = array();
+    if (preg_match('!^(R\d+)/([M|P])(\d+)(FT)?$!', $token, $results)) {
+      $this->raw = $token;
+      $this->runway = $results[1];
+      $this->assessment = $results[2];
+      $this->rvr = $results[3];
+      $this->unit = @$results[4];
+    }
+  }
+
+  static function create ($token, $exception_on_error = false) {
+    $rvr = new MetarRVR($token);
+    if ($rvr->raw) {
+      return $rvr;
+    } else if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized RVR", $token);
+    } else {
+      return null;
+    }
+  }
+}
+
+/**
  * Significant weather info from a METAR report.
  */
 class MetarWeatherType extends \stdClass {
@@ -284,6 +323,7 @@ class Metar extends \stdClass {
   public $auto = false;
   public $wind;
   public $visibility;
+  public $rvr = array();
   public $weather_types = array();
   public $cloud_layers = array();
   public $temperature;
@@ -315,6 +355,17 @@ class Metar extends \stdClass {
 
     $token = array_shift($tokens);
     $this->visibility = MetarVisibility::create($token, true);
+
+    while ($tokens) {
+      $token = array_shift($tokens);
+      $rvr = MetarRVR::create($token);
+      if ($rvr) {
+        array_push($this->rvr, $rvr);
+      } else {
+        array_unshift($tokens, $token);
+        break;
+      }
+    }
 
     while ($tokens) {
       $token = array_shift($tokens);
