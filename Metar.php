@@ -174,7 +174,7 @@ class MetarCloudLayer extends \stdClass {
     if ($token == 'CLR') {
       $this->raw = $token;
       $this->coverage = 'CLR';
-    } else if (preg_match('/^(FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
+    } else if (preg_match('/^(NSC|FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
       $this->raw = $token;
       $this->coverage = $results[1];
       $this->altitude = @$results[2];

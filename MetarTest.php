@@ -100,7 +100,45 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
-  function testMany () {
+  function testNSC () {
+    $metar = new \metar_taf\Metar('OAKB 021250Z 09006KT 5000 HZ FU NSC M01/M08 Q1020 NOSIG RMK WHT WHT');
+    $template = array(
+      'airport' => 'OAKB',
+      'time' => '021250Z',
+      'auto' => false,
+      'wind' => array(
+        'direction' => 90,
+        'speed' => 6,
+        'unit' => 'KT',
+      ),
+      'visibility' => array(
+        'visibility' => 5000,
+      ),
+      'weather_types' => array(
+        array(
+          'obscuration' => 'HZ',
+        ),
+        array(
+          'obscuration' => 'FU',
+        ),
+      ),
+      'cloud_layers' => array(
+        'coverage' => 'NSC',
+      ),
+      'temperature' => array(
+        'temperature' => -1,
+        'dewpoint' => -8,
+      ),
+      'altimeter' => array(
+        'altimeter' => 1020,
+        'unit' => 'Q',
+      ),
+      'nosig' => true,
+      'remarks' => 'WHT WHT',
+    );
+  }
+
+  function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);
     while (true) {
