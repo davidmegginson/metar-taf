@@ -100,6 +100,20 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  function testMany () {
+    $handle = fopen(__DIR__ . '/test-data.txt', 'r');
+    $this->assertNotNull($handle);
+    while (true) {
+      $metar = trim(fgets($handle));
+      if ($metar) {
+        new \metar_taf\Metar($metar);
+      } else {
+        break;
+      }
+    }
+    fclose($handle);
+  }
+
   private function compare_object ($template, stdClass $object) {
     foreach ($template as $key => $expected_value) {
       $actual_value = $object->$key;
