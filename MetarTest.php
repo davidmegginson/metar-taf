@@ -138,6 +138,37 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
+  function testNCDNDV () {
+    $metar = new \metar_taf\Metar('EKHN 021250Z AUTO 29021KT 9999NDV NCD 07/05 Q1017');
+    $template = array(
+      'airport' => 'EKHN',
+      'time' => '021250Z',
+      'auto' => true,
+      'wind' => array(
+        'direction' => 290,
+        'speed' => 21,
+        'unit' => 'KT',
+      ),
+      'visibility' => array(
+        'visibility' => 9999,
+        'directionality' => 'NDV',
+      ),
+      'cloud_layers' => array(
+        'coverage' => 'NCD',
+      ),
+      'temperature' => array(
+        'temperature' => 7,
+        'dewpoint' => 5,
+      ),
+      'altimeter' => array(
+        'altimeter' => 1017,
+        'unit' => 'Q',
+      ),
+      'nosig' => true,
+      'remarks' => null,
+    );
+  }
+
   function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);

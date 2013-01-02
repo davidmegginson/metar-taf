@@ -72,6 +72,7 @@ class MetarVisibility extends \stdClass {
   public $raw;
   public $visibility;
   public $unit;
+  public $directionality;
 
   function __construct ($token = null) {
     if ($token) {
@@ -81,10 +82,11 @@ class MetarVisibility extends \stdClass {
 
   function parse ($token) {
     $results = array();
-    if (preg_match('!^(CAVOK|[MP]?\d+(?:/\d+)?)(SM)?$!', $token, $results)) {
+    if (preg_match('!^(CAVOK|[MP]?\d+(?:/\d+)?)(SM|)?(NDV)?$!', $token, $results)) {
       $this->raw = $token;
       $this->visibility = $results[1];
       $this->unit = @$results[2];
+      $this->directionality = @$results[3];
     }
   }
 
@@ -174,7 +176,7 @@ class MetarCloudLayer extends \stdClass {
     if ($token == 'CLR') {
       $this->raw = $token;
       $this->coverage = 'CLR';
-    } else if (preg_match('/^(NSC|FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
+    } else if (preg_match('/^(NCD|NSC|FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
       $this->raw = $token;
       $this->coverage = $results[1];
       $this->altitude = @$results[2];
