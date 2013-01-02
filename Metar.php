@@ -3,11 +3,13 @@
 // Module for parsing and processing METAR data.
 ////////////////////////////////////////////////////////////////////////
 
+namespace metar_taf;
+
 
 /**
  * Exception thrown when a METAR can't be parsed.
  */
-class MetarParsingException extends Exception {
+class MetarParsingException extends \Exception {
 
   public $error_message;
   public $token;
@@ -24,7 +26,7 @@ class MetarParsingException extends Exception {
 /**
  * Wind information from a METAR report.
  */
-class MetarWind {
+class MetarWind extends \stdClass {
 
   public $raw;
   public $direction;
@@ -66,7 +68,7 @@ class MetarWind {
 /**
  * Surface visibility from a Metar report.
  */
-class MetarVisibility {
+class MetarVisibility extends \stdClass {
   public $raw;
   public $visibility;
   public $unit;
@@ -102,7 +104,7 @@ class MetarVisibility {
 /**
  * Significant weather info from a METAR report.
  */
-class MetarWeatherType {
+class MetarWeatherType extends \stdClass {
   public $raw;
   public $intensity_or_proximity;
   public $descriptor;
@@ -155,7 +157,7 @@ class MetarWeatherType {
  *
  * This class describes a single cloud layer.
  */
-class MetarCloudLayer {
+class MetarCloudLayer extends \stdClass {
   public $raw;
   public $coverage;
   public $altitude;
@@ -169,10 +171,13 @@ class MetarCloudLayer {
 
   function parse ($token) {
     $results = array();
-    if (preg_match('/^(FEW|SCT|BKN|OVC|VV)(\d+)(ACC|TCU|CB)?$/', $token, $results)) {
+    if ($token == 'CLR') {
+      $this->raw = $token;
+      $this->coverage = 'CLR';
+    } else if (preg_match('/^(FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
       $this->raw = $token;
       $this->coverage = $results[1];
-      $this->altitude = $results[2];
+      $this->altitude = @$results[2];
       $this->cloud_type = @$results[3];
     }
   }
@@ -194,7 +199,7 @@ class MetarCloudLayer {
 /**
  * Temperature and dewpoint from a METAR report.
  */
-class MetarTemperature {
+class MetarTemperature extends \stdClass {
   public $raw;
   public $temperature;
   public $dewpoint;
@@ -231,7 +236,7 @@ class MetarTemperature {
 /**
  * Altimeter setting from a METAR report.
  */
-class MetarAltimeter {
+class MetarAltimeter extends \stdClass {
 
   public $raw;
   public $altimeter;
@@ -269,7 +274,7 @@ class MetarAltimeter {
 /** 
  * A full METAR report.
  */
-class Metar {
+class Metar extends \stdClass {
 
   public $raw;
   public $airport;
