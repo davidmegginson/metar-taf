@@ -196,6 +196,21 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  // test variable wind direction
+  function testWindVariation () {
+    $metar = new \metar_taf\Metar('EEKA 021250Z 23007KT 170V280 9999 SCT021 02/01 Q1003');
+    $template = array(
+      'wind' => array(
+        'direction' => 230,
+        'speed' => 7,
+        'unit' => 'KT',
+        'min_variation' => 170,
+        'max_variation' => 280,
+      ),
+    );
+    $this->compare_object($template, $metar);
+  }
+
   function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);

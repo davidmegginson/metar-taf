@@ -33,6 +33,8 @@ class MetarWind extends \stdClass {
   public $speed;
   public $gust;
   public $unit;
+  public $min_variation;
+  public $max_variation;
 
   function __construct ($token = null) {
     if ($token) {
@@ -42,12 +44,14 @@ class MetarWind extends \stdClass {
 
   private function parse ($token) {
     $results = array();
-    if (preg_match('/(VRB|\d\d\d)(\d\d)(?:G(\d\d))?(KT|MPS)$/', $token, $results)) {
+    if (preg_match('/(VRB|\d\d\d)(\d\d)(?:G(\d\d))?(KT|MPS)(?: (\d{1,3})V(\d{1,3}))?$/', $token, $results)) {
       $this->raw = $token;
       $this->direction = $results[1];
       $this->speed = $results[2];
-      $this->gust = $results[3];
-      $this->unit = $results[4];
+      $this->gust = @$results[3];
+      $this->unit = @$results[4];
+      $this->min_variation = @$results[5];
+      $this->max_variation = @$results[6];
     }
   }
 
@@ -350,9 +354,15 @@ class Metar extends \stdClass {
       $this->auto = true;
     }
 
+    // wind
     $token = array_shift($tokens);
+    if (preg_match('/^\d+V\d+$/', $tokens[0])) {
+      // special case of variable wind direction
+      $token .= ' ' . array_shift($tokens);
+    }
     $this->wind = MetarWind::create($token, true);
 
+    // visibility
     $token = array_shift($tokens);
     if (preg_match('!^\d/\dSM$!', $tokens[0])) {
       // special case of a number and fraction
