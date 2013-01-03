@@ -4,7 +4,7 @@ require_once(__DIR__ . '/Metar.php');
 
 class MetarTest extends PHPUnit_Framework_TestCase {
 
-  function testCAVOK () {
+ function testCAVOK () {
     $metar = new \metar_taf\Metar('ZMUB 021300Z 01002MPS CAVOK M31/M35 Q1036 NOSIG RMK QFE667.5 70');
     $template = array(
       'airport' => 'ZMUB',
@@ -32,7 +32,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
-  function testUK () {
+ function testUK () {
     $metar = new \metar_taf\Metar('EGLL 021250Z 23009KT 9999 SCT023 BKN029 08/06 Q1024');
     $template = array(
       'airport' => 'EGLL',
@@ -70,7 +70,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
-  function testUS () {
+ function testUS () {
     $metar = new \metar_taf\Metar('KLAX 021253Z 10003KT 10SM CLR 07/M01 A3009 RMK AO2 SLP186 T00721011');
     $template = array(
       'airport' => 'KLAX',
@@ -100,7 +100,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
-  function testNSC () {
+ function testNSC () {
     $metar = new \metar_taf\Metar('OAKB 021250Z 09006KT 5000 HZ FU NSC M01/M08 Q1020 NOSIG RMK WHT WHT');
     $template = array(
       'airport' => 'OAKB',
@@ -138,7 +138,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
-  function testNCDNDV () {
+ function testNCDNDV () {
     $metar = new \metar_taf\Metar('EKHN 021250Z AUTO 29021KT 9999NDV NCD 07/05 Q1017');
     $template = array(
       'airport' => 'EKHN',
@@ -169,7 +169,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
-  function testRVR () {
+ function testRVR () {
     $metar = new \metar_taf\Metar('PAKU 021245Z 06016KT 3SM R06/P6000FT BR BKN017 M20/M22 A2955');
     $template = array(
       'rvr' => array(
@@ -184,11 +184,24 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  // test a fractional visibility
+  function testFraction () {
+    $metar = new \metar_taf\Metar('CYVV 021245Z 33005KT 1 1/2SM -SN OVC018 RMK SN3SC5');
+    $template = array(
+      'visibility' => array(
+        'visibility' => '1 1/2',
+        'unit' => 'SM',
+      ),
+    );
+    $this->compare_object($template, $metar);
+  }
+
   function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);
     while (true) {
       $metar = trim(fgets($handle));
+      print "$metar\n";
       if ($metar) {
         new \metar_taf\Metar($metar);
       } else {

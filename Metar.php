@@ -82,7 +82,7 @@ class MetarVisibility extends \stdClass {
 
   function parse ($token) {
     $results = array();
-    if (preg_match('!^(CAVOK|[MP]?\d+(?:/\d+)?)(SM|)?(NDV)?$!', $token, $results)) {
+    if (preg_match('!^(CAVOK|[MP]?(?:\d+ )?\d+(?:/\d+)?)(SM)?(NDV)?$!', $token, $results)) {
       $this->raw = $token;
       $this->visibility = $results[1];
       $this->unit = @$results[2];
@@ -354,6 +354,10 @@ class Metar extends \stdClass {
     $this->wind = MetarWind::create($token, true);
 
     $token = array_shift($tokens);
+    if (preg_match('!^\d/\dSM$!', $tokens[0])) {
+      // special case of a number and fraction
+      $token .= ' ' . array_shift($tokens);
+    }
     $this->visibility = MetarVisibility::create($token, true);
 
     while ($tokens) {
@@ -390,10 +394,10 @@ class Metar extends \stdClass {
     }
 
     $token = array_shift($tokens);
-    $this->temperature = MetarTemperature::create($token, true);
+    $this->temperature = MetarTemperature::create($token, false);
 
     $token = array_shift($tokens);
-    $this->altimeter = MetarAltimeter::create($token, true);
+    $this->altimeter = MetarAltimeter::create($token, false);
 
     if (@$tokens[0] == 'NOSIG') {
       array_shift($tokens);
