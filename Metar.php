@@ -44,7 +44,10 @@ class MetarWind extends \stdClass {
 
   private function parse ($token) {
     $results = array();
-    if (preg_match('/(VRB|\d\d\d)(\d\d)(?:G(\d\d))?(KT|MPS)(?: (\d{1,3})V(\d{1,3}))?$/', $token, $results)) {
+    if (preg_match('!^/+!', $token)) {
+      // slashed out
+      $this->raw = $token;
+    } else if (preg_match('/(VRB|\d\d\d)(\d\d)(?:G(\d\d))?(KT|MPS)(?: (\d{1,3})V(\d{1,3}))?$/', $token, $results)) {
       $this->raw = $token;
       $this->direction = $results[1];
       $this->speed = $results[2];
@@ -125,12 +128,13 @@ class MetarRVR extends \stdclass {
 
   function parse ($token) {
     $results = array();
-    if (preg_match('!^(R\d+)/([M|P])(\d+)(FT)?$!', $token, $results)) {
+    if (preg_match('!^(R.+)/([M|P])?(\d+)(?:V(\d+))?(FT)?$!', $token, $results)) {
       $this->raw = $token;
       $this->runway = $results[1];
       $this->assessment = $results[2];
       $this->rvr = $results[3];
-      $this->unit = @$results[4];
+      $this->rvr_max = $results[4];
+      $this->unit = @$results[5];
     }
   }
 
@@ -325,6 +329,7 @@ class Metar extends \stdClass {
   public $airport;
   public $time;
   public $auto = false;
+  public $correction = false;
   public $wind;
   public $visibility;
   public $rvr = array();
@@ -354,21 +359,32 @@ class Metar extends \stdClass {
       $this->auto = true;
     }
 
+    if ($tokens[0] == 'COR') {
+      array_shift($tokens);
+      $this->correction = true;
+    }
+
     // wind
     $token = array_shift($tokens);
-    if (preg_match('/^\d+V\d+$/', $tokens[0])) {
+    if (preg_match('/^\d+V\d+$/', @$tokens[0])) {
       // special case of variable wind direction
       $token .= ' ' . array_shift($tokens);
     }
-    $this->wind = MetarWind::create($token, true);
+    $this->wind = MetarWind::create($token, false);
+    if (!$this->wind) {
+      array_unshift($tokens, $token);
+    }
 
     // visibility
     $token = array_shift($tokens);
-    if (preg_match('!^\d/\dSM$!', $tokens[0])) {
+    if (preg_match('!^\d/\dSM$!', @$tokens[0])) {
       // special case of a number and fraction
       $token .= ' ' . array_shift($tokens);
     }
-    $this->visibility = MetarVisibility::create($token, true);
+    $this->visibility = MetarVisibility::create($token, false);
+    if (!$this->visibility) {
+      array_unshift($tokens, $token);
+    }
 
     while ($tokens) {
       $token = array_shift($tokens);
@@ -418,6 +434,12 @@ class Metar extends \stdClass {
       array_shift($tokens);
       $this->remarks = implode(' ', $tokens);
       $tokens = array();
+    }
+
+    foreach ($tokens as $token) {
+      if ($token) {
+        throw new MetarParsingException("Unprocessed tokens", implode(' ', $tokens));
+      }
     }
 
   }
