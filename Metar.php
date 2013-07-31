@@ -128,12 +128,12 @@ class MetarRVR extends \stdclass {
 
   function parse ($token) {
     $results = array();
-    if (preg_match('!^(R.+)/([M|P])?(\d+)(?:V(\d+))?(FT)?$!', $token, $results)) {
+    if (preg_match('!^(R.+)/([M|P])?(\d{4})(?:V(\d+)|[UDN])?(FT)?$!', $token, $results)) {
       $this->raw = $token;
       $this->runway = $results[1];
       $this->assessment = $results[2];
       $this->rvr = $results[3];
-      $this->rvr_max = $results[4];
+      $this->rvr_max = @$results[4];
       $this->unit = @$results[5];
     }
   }
@@ -428,6 +428,7 @@ class Metar extends \stdClass {
   public $weather_types = array();
   public $cloud_layers = array();
   public $temperature;
+  public $altimeter;
   public $nosig = false;
   public $runway_conditions = array();
   public $remarks;
@@ -457,95 +458,94 @@ class Metar extends \stdClass {
       $this->correction = true;
     }
 
-    // Read wind conditions
-    $token = array_shift($tokens);
-    if (preg_match('/^\d+V\d+$/', @$tokens[0])) {
-      // special case of variable wind direction
-      $token .= ' ' . array_shift($tokens);
-    }
-    $this->wind = MetarWind::create($token, false);
-    if (!$this->wind) {
-      array_unshift($tokens, $token);
-    }
-
-    // Read visibility
-    $token = array_shift($tokens);
-    if (preg_match('!^\d/\dSM$!', @$tokens[0])) {
-      // special case of a number and fraction
-      $token .= ' ' . array_shift($tokens);
-    }
-    $this->visibility = MetarVisibility::create($token, false);
-    if (!$this->visibility) {
-      array_unshift($tokens, $token);
-    }
-
-    // Read runway visual ranges
     while ($tokens) {
+
       $token = array_shift($tokens);
+
+      // Read wind conditions
+      if (!$this->wind) {
+        if (preg_match('/^\d+V\d+$/', @$tokens[0])) {
+          // special case of variable wind direction
+          $token .= ' ' . array_shift($tokens);
+        }
+        $wind = MetarWind::create($token, false);
+        if ($wind) {
+          $this->wind = $wind;
+          continue;
+        }
+      }
+
+      // Read the visibility
+      if (!$this->visibility) {
+        if (preg_match('!^\d/\dSM$!', @$tokens[0])) {
+          // special case of a number and fraction
+          $token .= ' ' . array_shift($tokens);
+        }
+        $visibility = MetarVisibility::create($token, false);
+        if ($visibility) {
+          $this->visibility = $visibility;
+          continue;
+        }
+      }
+      
+      // Read a runway visual range
       $rvr = MetarRVR::create($token);
       if ($rvr) {
         array_push($this->rvr, $rvr);
-      } else {
-        array_unshift($tokens, $token);
-        break;
+        continue;
       }
-    }
 
-    // Read weather types
-    while ($tokens) {
-      $token = array_shift($tokens);
+      // Read a weather types
       $weather_type = MetarWeatherType::create($token);
       if ($weather_type) {
         array_push($this->weather_types, $weather_type);
-      } else {
-        array_unshift($tokens, $token);
-        break;
+        continue;
       }
-    }
 
-    // Read cloud layers
-    while ($tokens) {
-      $token = array_shift($tokens);
+      // Read a cloud layer
       $cloud_layer = MetarCloudLayer::create($token);
       if ($cloud_layer) {
         array_push($this->cloud_layers, $cloud_layer);
-      } else {
-        array_unshift($tokens, $token);
-        break;
+        continue;
       }
-    }
 
-    // Read temperature
-    $token = array_shift($tokens);
-    $this->temperature = MetarTemperature::create($token, false);
-
-    // Read altimeter
-    $token = array_shift($tokens);
-    $this->altimeter = MetarAltimeter::create($token, false);
-
-    // Check for no significant weather
-    if (@$tokens[0] == 'NOSIG') {
-      array_shift($tokens);
-      $this->nosig = true;
-    }
-
-    // Check for European encoded runway conditions
-    while ($tokens) {
-      $token = array_shift($tokens);
-      $runway_conditions = MetarRunwayConditions::create($token, false);
-      if ($runway_conditions) {
-        array_push($this->runway_conditions, $runway_conditions);
-      } else {
-        array_unshift($tokens, $token);
-        break;
+      // Read the temperature
+      if (!$this->temperature) {
+        $temperature = MetarTemperature::create($token, false);
+        if ($temperature) {
+          $this->temperature = $temperature;
+          continue;
+        }
       }
-    }
 
-    // Read remarks
-    if (@$tokens[0] == 'RMK') {
-      array_shift($tokens);
-      $this->remarks = implode(' ', $tokens);
-      $tokens = array();
+      // Read the altimeter
+      if (!$this->altimeter) {
+        $altimeter = MetarAltimeter::create($token, false);
+        if ($altimeter) {
+          $this->altimeter = $altimeter;
+          continue;
+        }
+      }
+
+      // Check for no significant weather
+      if ($token == 'NOSIG') {
+        $this->nosig = true;
+        continue;
+      }
+
+      // Check for European encoded runway conditions
+      $runway_condition = MetarRunwayConditions::create($token, false);
+      if ($runway_condition) {
+        array_push($this->runway_conditions, $runway_condition);
+        continue;
+      }
+
+      // Read remarks
+      if ($token == 'RMK') {
+        $this->remarks = implode(' ', $tokens);
+        $tokens = array();
+      }
+
     }
 
     foreach ($tokens as $token) {

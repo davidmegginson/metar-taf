@@ -279,12 +279,11 @@ class MetarTest extends PHPUnit_Framework_TestCase {
   /**
    * Test against a worldwide METAR file.
    */
-  function xtestMany () {
+  function testMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);
     while (true) {
       $metar = trim(fgets($handle));
-      print "$metar\n";
       if ($metar) {
         new \metar_taf\Metar($metar);
       } else {
