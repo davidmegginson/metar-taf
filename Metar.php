@@ -550,7 +550,7 @@ class Metar extends \stdClass {
 
     foreach ($tokens as $token) {
       if ($token) {
-        throw new MetarParsingException("Unprocessed tokens", implode(' ', $tokens));
+        throw new MetarParsingException("Unprocessed tokens in \n$report\n", implode(' ', $tokens));
       }
     }
 
