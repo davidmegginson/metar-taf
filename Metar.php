@@ -319,6 +319,98 @@ class MetarAltimeter extends \stdClass {
 
 }
 
+/**
+ * Runway surface conditions from a European METAR report.
+ *
+ * See http://www.ivao.aero/training/tutorials/metar/metar.htm
+ */
+class MetarRunwayConditions extends \stdClass {
+
+  public $raw;
+  public $runway;
+  public $deposits;
+  public $extent;
+  public $depth;
+  public $friction;
+
+  public static $DEPOSIT_TYPES = array(
+    '0' => 'Clear and dry',
+    '1' => 'Damp',
+    '2' => 'Wet or water particles',
+    '3' => 'Rime or frost covered',
+    '4' => 'Dry snow',
+    '5' => 'Wet snow',
+    '6' => 'Slush',
+    '7' => 'Ice',
+    '8' => 'Compacted or rolled snow',
+    '9' => 'Frozen ruts or ridges',
+    '/' => 'Not reported (runway clearance in progress)',
+  );
+
+  public static $EXTENT_TYPES = array(
+    '1' => '<10% contaminated (covered)',
+    '2' => '11% to 25% contaminated (covered)',
+    '5' => '26% to 50% contaminated (covered)',
+    '9' => '51% to 100% contaminated (covered)',
+    '/' => 'Not reported (runway clearance in progress)',
+  );
+
+  public static $DEPTH_TYPES = array(
+    '00' => 'Less than 1mm',
+    // Note: a value between 01-90 is actual depth in mm
+    '92' => '10cm',
+    '93' => '15cm',
+    '94' => '20cm',
+    '95' => '25cm',
+    '96' => '30cm',
+    '97' => '35cm',
+    '98' => '40cm or more',
+    '99' => 'Runway not operational due to snow, slush, ice, large drifts or runway clearance, depth not reported',
+    '//' => 'Not operationally significant or measurable',
+  );
+
+  public static $FRICTION_TYPES = array(
+    // Note: a lower value is the actual friction coefficient
+    '91' => 'Braking action poor',
+    '92' => 'Braking action medium to poor',
+    '93' => 'Braking action medium',
+    '94' => 'Braking action medium to good',
+    '95' => 'Braking action good',
+    '99' => 'Figures unreliable',
+    '//' => 'Braking action not reported or runway not operational or airport closed',
+  );
+
+  function __construct ($token = null) {
+    if ($token) {
+      $this->parse($token);
+    }
+  }
+
+  function parse ($token) {
+    $results = array();
+    if (preg_match('!^R(\d{2}[LRC]?)/([\d/])([\d/])([\d/]{2})([\d/]{2})$!', $token, $results)) {
+      $this->raw = $token;
+      $this->runway = $results[1];
+      $this->deposits = $results[2];
+      $this->extent = $results[3];
+      $this->depth = $results[4];
+      $this->friction = $results[5];
+    }
+  }
+
+  static function create ($token, $exception_on_error = false) {
+    $runwayConditions = new MetarRunwayConditions($token);
+    if ($runwayConditions->raw) {
+      return $runwayConditions;
+    } else if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized runway conditions", $token);
+    } else {
+      return null;
+    }
+  }
+
+}
+
 
 /** 
  * A full METAR report.
@@ -337,6 +429,7 @@ class Metar extends \stdClass {
   public $cloud_layers = array();
   public $temperature;
   public $nosig = false;
+  public $runway_conditions = array();
   public $remarks;
 
   function __construct ($report = null) {
@@ -364,7 +457,7 @@ class Metar extends \stdClass {
       $this->correction = true;
     }
 
-    // wind
+    // Read wind conditions
     $token = array_shift($tokens);
     if (preg_match('/^\d+V\d+$/', @$tokens[0])) {
       // special case of variable wind direction
@@ -375,7 +468,7 @@ class Metar extends \stdClass {
       array_unshift($tokens, $token);
     }
 
-    // visibility
+    // Read visibility
     $token = array_shift($tokens);
     if (preg_match('!^\d/\dSM$!', @$tokens[0])) {
       // special case of a number and fraction
@@ -386,6 +479,7 @@ class Metar extends \stdClass {
       array_unshift($tokens, $token);
     }
 
+    // Read runway visual ranges
     while ($tokens) {
       $token = array_shift($tokens);
       $rvr = MetarRVR::create($token);
@@ -397,6 +491,7 @@ class Metar extends \stdClass {
       }
     }
 
+    // Read weather types
     while ($tokens) {
       $token = array_shift($tokens);
       $weather_type = MetarWeatherType::create($token);
@@ -408,6 +503,7 @@ class Metar extends \stdClass {
       }
     }
 
+    // Read cloud layers
     while ($tokens) {
       $token = array_shift($tokens);
       $cloud_layer = MetarCloudLayer::create($token);
@@ -419,17 +515,33 @@ class Metar extends \stdClass {
       }
     }
 
+    // Read temperature
     $token = array_shift($tokens);
     $this->temperature = MetarTemperature::create($token, false);
 
+    // Read altimeter
     $token = array_shift($tokens);
     $this->altimeter = MetarAltimeter::create($token, false);
 
+    // Check for no significant weather
     if (@$tokens[0] == 'NOSIG') {
       array_shift($tokens);
       $this->nosig = true;
     }
 
+    // Check for European encoded runway conditions
+    while ($tokens) {
+      $token = array_shift($tokens);
+      $runway_conditions = MetarRunwayConditions::create($token, false);
+      if ($runway_conditions) {
+        array_push($this->runway_conditions, $runway_conditions);
+      } else {
+        array_unshift($tokens, $token);
+        break;
+      }
+    }
+
+    // Read remarks
     if (@$tokens[0] == 'RMK') {
       array_shift($tokens);
       $this->remarks = implode(' ', $tokens);

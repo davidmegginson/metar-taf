@@ -217,9 +217,32 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
-  function xtestRunwayVisibility () {
+  /**
+   * Test a METAR with 
+   */
+  function testRunwayConditions () {
     $metar = new \metar_taf\Metar('EYSA 021245Z 23009KT 9999 FEW012 SCT038 BKN048 03/01 Q1010 R14L/290161 R14R/290161');
-    // TODO - runway visibility at end
+    $template = array(
+      'runway_conditions' => array(
+        array(
+          'raw' => 'R14L/290161',
+          'runway' => '14L',
+          'deposits' => '2',
+          'extent' => '9',
+          'depth' => '01',
+          'friction' => '61',
+        ),
+        array(
+          'raw' => 'R14R/290161',
+          'runway' => '14R',
+          'deposits' => '2',
+          'extent' => '9',
+          'depth' => '01',
+          'friction' => '61',
+        ),
+      ),
+    );
+    $this->compare_object($template, $metar);
   }
 
   /**
