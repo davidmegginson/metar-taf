@@ -1,0 +1,35 @@
+This is a free (as in Public Domain -- see the file UNLICENSE) PHP library for parsing METAR aviation weather reports, with TAF aviation forecasts soon to come.
+
+You use the class like this:
+
+  $metar = new \metar_taf\Metar($report);
+
+Where $report is a textual METAR like "EGLL 021250Z 23009KT 9999 SCT023 BKN029 08/06 Q1024".
+
+The Metar class retains the original raw report, but also parses it into a series of semantic parts:
+
+  $metar->airport
+  $metar->time
+  $metar->auto
+  $metar->correction
+  $metar->wind
+  $metar->visibility
+  $metar->rvr
+  $meter->weather_types
+  $metar->cloud_layers
+  $metar->temperature
+  $metar->nosig
+  $metar->runway_conditions
+  $metar->remarks
+
+Many of these are actually their own subclasses with additional functionality.  Read the source for more info, or generate API docs using a JavaDoc-like tool.
+
+There is also a comprehensive PHPUnit testing class to try everything out (including running the class over a collection of over 20,000 worldwide METAR reports collected earlier this year:
+
+  phpunit MetarTest.php
+
+Enjoy!
+
+
+David Megginson,
+2013-07-31
