@@ -5,6 +5,9 @@ require_once(__DIR__ . '/Metar.php');
 class MetarTest extends PHPUnit_Framework_TestCase {
 
 
+  /**
+   * Test the CAVOK report (and also meters per second for wind speed
+   */
   function testCAVOK () {
     $metar = new \metar_taf\Metar('ZMUB 021300Z 01002MPS CAVOK M31/M35 Q1036 NOSIG RMK QFE667.5 70');
     $template = array(
@@ -33,6 +36,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  /**
+   * Test a typical UK METAR, with visibility in meters and altimeter in hectopascals
+   */
   function testUK () {
     $metar = new \metar_taf\Metar('EGLL 021250Z 23009KT 9999 SCT023 BKN029 08/06 Q1024');
     $template = array(
@@ -71,6 +77,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  /**
+   * Test a typical US METAR, with visibility in statute miles and altimeter in inches of mercury
+   */
   function testUS () {
     $metar = new \metar_taf\Metar('KLAX 021253Z 10003KT 10SM CLR 07/M01 A3009 RMK AO2 SLP186 T00721011');
     $template = array(
@@ -101,6 +110,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  /**
+   * Test "NSC" for no significant cloud
+   */
   function testNSC () {
     $metar = new \metar_taf\Metar('OAKB 021250Z 09006KT 5000 HZ FU NSC M01/M08 Q1020 NOSIG RMK WHT WHT');
     $template = array(
@@ -170,6 +182,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     );
   }
 
+  /**
+   * Test a report with runway visual range.
+   */
   function testRVR () {
     $metar = new \metar_taf\Metar('PAKU 021245Z 06016KT 3SM R06/P6000FT BR BKN017 M20/M22 A2955');
     $template = array(
@@ -185,6 +200,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  /**
+   * Test a report with RVR varying.
+   */
   function testVaryingRVR () {
     $metar = new \metar_taf\Metar('KEUG 021248Z AUTO 23003KT 1/2SM R16R/1800V3000FT FZFG VV001 M05/M06 A3027 RMK AO2 PNO $');
     $template = array(
@@ -204,7 +222,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     // TODO - runway visibility at end
   }
 
-  // test a fractional visibility
+  /**
+   * Test a METAR with visibility specified as a fraction
+   */
   function testFraction () {
     $metar = new \metar_taf\Metar('CYVV 021245Z 33005KT 1 1/2SM -SN OVC018 RMK SN3SC5');
     $template = array(
@@ -216,7 +236,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
-  // test variable wind direction
+  /**
+   * Test a METAR with variable wind direction.
+   */
   function testWindVariation () {
     $metar = new \metar_taf\Metar('EEKA 021250Z 23007KT 170V280 9999 SCT021 02/01 Q1003');
     $template = array(
@@ -231,6 +253,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     $this->compare_object($template, $metar);
   }
 
+  /**
+   * Test against a worldwide METAR file.
+   */
   function xtestMany () {
     $handle = fopen(__DIR__ . '/test-data.txt', 'r');
     $this->assertNotNull($handle);
@@ -246,6 +271,9 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     fclose($handle);
   }
 
+  /**
+   * Compare an object to a template data structure.
+   */
   private function compare_object ($template, stdClass $object) {
     foreach ($template as $key => $expected_value) {
       $actual_value = $object->$key;
