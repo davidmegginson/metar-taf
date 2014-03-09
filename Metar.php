@@ -51,24 +51,26 @@ class MetarWind extends \stdClass {
       $this->raw = $token;
       $this->direction = $results[1];
       $this->speed = $results[2];
-      $this->gust = @$results[3];
-      $this->unit = @$results[4];
-      $this->min_variation = @$results[5];
-      $this->max_variation = @$results[6];
+      $this->gust = $results[3];
+      $this->unit = $results[4];
+      $this->min_variation = array_key_exists(5,$results) ? $results[5] : 0;
+      $this->max_variation = array_key_exists(6,$results) ? $results[6] : 0;
     }
   }
 
   static function create ($token, $exception_on_error = false) {
     $wind = new MetarWind($token);
+
     if ($wind->raw) {
       return $wind;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized wind information", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized wind information", $token);
+    }
+
+    return null;
+  }
 }
 
 
@@ -92,22 +94,24 @@ class MetarVisibility extends \stdClass {
     if (preg_match('!^(CAVOK|[MP]?(?:\d+ )?\d+(?:/\d+)?)(SM)?(NDV)?$!', $token, $results)) {
       $this->raw = $token;
       $this->visibility = $results[1];
-      $this->unit = @$results[2];
-      $this->directionality = @$results[3];
+      $this->unit = array_key_exists(2,$results) ? $results[2] : '';
+      $this->directionality = array_key_exists(3,$results) ? $results[3] : '';
     }
   }
 
   static function create ($token, $exception_on_error = false) {
     $visibility = new MetarVisibility($token);
+
     if ($visibility->raw) {
       return $visibility;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized visibility information", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized visibility information", $token);
+    }
+
+    return null;
+  }
 }
 
 /**
@@ -133,20 +137,23 @@ class MetarRVR extends \stdclass {
       $this->runway = $results[1];
       $this->assessment = $results[2];
       $this->rvr = $results[3];
-      $this->rvr_max = @$results[4];
-      $this->unit = @$results[5];
+      $this->rvr_max = array_key_exists(4,$results) ? $results[4] : 0;
+      $this->unit = array_key_exists(5,$results) ? $results[5] : '';
     }
   }
 
   static function create ($token, $exception_on_error = false) {
     $rvr = new MetarRVR($token);
+
     if ($rvr->raw) {
       return $rvr;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized RVR", $token);
-    } else {
-      return null;
     }
+
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized RVR", $token);
+    }
+
+    return null;
   }
 }
 
@@ -179,25 +186,27 @@ class MetarWeatherType extends \stdClass {
       '$/';
     if (preg_match($regex, $token, $results)) {
       $this->raw = $token;
-      $this->intensity_or_proximity = @$results[1];
-      $this->descriptor = @$results[2];
-      $this->precipitation = @$results[3];
-      $this->obscuration = @$results[4];
-      $this->other = @$results[5];
+      $this->intensity_or_proximity = array_key_exists(1,$results) ? $results[1] : 0;
+      $this->descriptor = array_key_exists(2,$results) ? $results[2] : '';
+      $this->precipitation = array_key_exists(3,$results) ? $results[3] : 0;
+      $this->obscuration = array_key_exists(4,$results) ? $results[4] : 0;
+      $this->other = array_key_exists(5,$results) ? $results[5] : 0;
     }
   }
 
   static function create ($token, $exception_on_error = false) {
     $weather_type = new MetarWeatherType($token);
+
     if ($weather_type->raw) {
       return $weather_type;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized weather type", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized weather type", $token);
+    }
+
+    return null;
+  }
 }
 
 
@@ -226,24 +235,25 @@ class MetarCloudLayer extends \stdClass {
     } else if (preg_match('/^(NCD|NSC|FEW|SCT|BKN|OVC|VV)(\d+)?(ACC|TCU|CB)?$/', $token, $results)) {
       $this->raw = $token;
       $this->coverage = $results[1];
-      $this->altitude = @$results[2];
-      $this->cloud_type = @$results[3];
+      $this->altitude = array_key_exists(2,$results) ? $results[2] : 0;
+      $this->cloud_type = array_key_exists(3,$results) ? $results[3] : '';
     }
   }
 
   static function create ($token, $exception_on_error = null) {
     $cloud_layer = new MetarCloudLayer($token);
+
     if ($cloud_layer->raw) {
       return $cloud_layer;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized cloud layer", $token);
-    } else {
-      return null;
     }
+
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized cloud layer", $token);
+    }
+
+    return null;
   }
-
 }
-
 
 /**
  * Temperature and dewpoint from a METAR report.
@@ -270,15 +280,17 @@ class MetarTemperature extends \stdClass {
 
   static function create ($token, $exception_on_error = false) {
     $temperature = new MetarTemperature($token);
+
     if ($temperature->raw) {
       return $temperature;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized temperature information", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized temperature information", $token);
+    }
+
+    return null;
+  }
 }
 
 
@@ -308,15 +320,17 @@ class MetarAltimeter extends \stdClass {
 
   static function create ($token, $exception_on_error = false) {
     $altimeter = new MetarAltimeter($token);
+
     if ($altimeter->raw) {
       return $altimeter;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized altimeter setting", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized altimeter setting", $token);
+    }
+
+    return null;
+  }
 }
 
 /**
@@ -400,19 +414,20 @@ class MetarRunwayConditions extends \stdClass {
 
   static function create ($token, $exception_on_error = false) {
     $runwayConditions = new MetarRunwayConditions($token);
+
     if ($runwayConditions->raw) {
       return $runwayConditions;
-    } else if ($exception_on_error) {
-      throw new MetarParsingException("Unrecognized runway conditions", $token);
-    } else {
-      return null;
     }
-  }
 
+    if ($exception_on_error) {
+      throw new MetarParsingException("Unrecognized runway conditions", $token);
+    }
+
+    return null;
+  }
 }
 
-
-/** 
+/**
  * A full METAR report.
  */
 class Metar extends \stdClass {
@@ -445,7 +460,6 @@ class Metar extends \stdClass {
     $tokens = preg_split('/\s/', $report);
 
     list($this->airport, $tokens) = $this->get_token($tokens, '/^[A-Z][A-Z0-9]{2,3}$/');
-
     list($this->time, $tokens) = $this->get_token($tokens, '/^[0-3]\d[0-9]\d[0-5]\dZ$/');
 
     if ($tokens[0] == 'AUTO') {
@@ -464,7 +478,7 @@ class Metar extends \stdClass {
 
       // Read wind conditions
       if (!$this->wind) {
-        if (preg_match('/^\d+V\d+$/', @$tokens[0])) {
+        if (isset($tokens[0])&&preg_match('/^\d+V\d+$/', $tokens[0])) {
           // special case of variable wind direction
           $token .= ' ' . array_shift($tokens);
         }
@@ -477,7 +491,7 @@ class Metar extends \stdClass {
 
       // Read the visibility
       if (!$this->visibility) {
-        if (preg_match('!^\d/\dSM$!', @$tokens[0])) {
+        if (isset($tokens[0])&&preg_match('!^\d/\dSM$!', $tokens[0])) {
           // special case of a number and fraction
           $token .= ' ' . array_shift($tokens);
         }
@@ -545,7 +559,6 @@ class Metar extends \stdClass {
         $this->remarks = implode(' ', $tokens);
         $tokens = array();
       }
-
     }
 
     foreach ($tokens as $token) {
@@ -553,22 +566,23 @@ class Metar extends \stdClass {
         throw new MetarParsingException("Unprocessed tokens in \n$report\n", implode(' ', $tokens));
       }
     }
-
   }
 
   private static function get_token ($tokens, $pattern, $required = true) {
     $token = array_shift($tokens);
     $orig_token = $token;
+
     if ($pattern && !preg_match($pattern, $token)) {
       array_unshift($tokens, $token);
       $token = null;
     }
+
     if ($required && !$token) {
       throw new MetarParsingException("Expected token matching $pattern", $orig_token);
     }
+
     return array($token, $tokens);
   }
-
 }
 
 // end
