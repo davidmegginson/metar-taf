@@ -114,6 +114,8 @@ class MetarTest extends PHPUnit_Framework_TestCase {
    * Test "NSC" for no significant cloud
    */
   function testNSC () {
+    $this->markTestIncomplete("Does not run through successfully");
+
     $metar = new \metar_taf\Metar('OAKB 021250Z 09006KT 5000 HZ FU NSC M01/M08 Q1020 NOSIG RMK WHT WHT');
     $template = array(
       'airport' => 'OAKB',
@@ -149,9 +151,12 @@ class MetarTest extends PHPUnit_Framework_TestCase {
       'nosig' => true,
       'remarks' => 'WHT WHT',
     );
+    $this->compare_object($template, $metar);
   }
 
   function testNCDNDV () {
+    $this->markTestIncomplete("Does not run through successfully");
+
     $metar = new \metar_taf\Metar('EKHN 021250Z AUTO 29021KT 9999NDV NCD 07/05 Q1017');
     $template = array(
       'airport' => 'EKHN',
@@ -180,6 +185,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
       'nosig' => true,
       'remarks' => null,
     );
+    $this->compare_object($template, $metar);
   }
 
   /**
@@ -215,6 +221,7 @@ class MetarTest extends PHPUnit_Framework_TestCase {
         ),
       ),
     );
+    $this->compare_object($template, $metar);
   }
 
   /**
@@ -285,7 +292,8 @@ class MetarTest extends PHPUnit_Framework_TestCase {
     while (true) {
       $metar = trim(fgets($handle));
       if ($metar) {
-        new \metar_taf\Metar($metar);
+        $m=new \metar_taf\Metar($metar);
+        $this->assertInstanceOf('\metar_taf\Metar',$m);
       } else {
         break;
       }
@@ -302,6 +310,8 @@ class MetarTest extends PHPUnit_Framework_TestCase {
       if (is_array($expected_value)) {
         if (is_array($actual_value)) {
           for ($i = 0; $i < count($expected_value); $i++) {
+            $this->assertArrayHasKey($i,$expected_value,$key);
+            $this->assertArrayHasKey($i,$actual_value,$key);
             $this->compare_object($expected_value[$i], $actual_value[$i]);
           }
         } else {
