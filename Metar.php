@@ -447,6 +447,7 @@ class Metar extends \stdClass {
   public $nosig = false;
   public $runway_conditions = array();
   public $remarks;
+  public $tempo;
 
   function __construct ($report = null) {
     if ($report) {
@@ -558,6 +559,12 @@ class Metar extends \stdClass {
       if ($token == 'RMK') {
         $this->remarks = implode(' ', $tokens);
         $tokens = array();
+      }
+      
+      // Read temporary group
+      if ($token == 'TEMPO') {
+      	$this->tempo = implode(' ', $tokens);
+      	$tokens = array();
       }
     }
 
